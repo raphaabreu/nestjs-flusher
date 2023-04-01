@@ -1,4 +1,4 @@
-# Flush Service
+# NestJS Flusher
 
 This is a NestJS module that simplifies the flushing of services. The `FlushService` emits a `FLUSH_EVENT` event when the module containing the service is being destroyed. It uses the EventEmitter2 class from the `@nestjs/event-emitter` package to handle asynchronous event emissions. Additionally you can force a manual flush at any time.
 
