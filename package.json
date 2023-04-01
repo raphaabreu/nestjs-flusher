@@ -1,6 +1,6 @@
 {
   "name": "@raphaabreu/nestjs-flusher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Utility that simplifies flushing services in NestJS",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -43,6 +43,6 @@
   },
   "peerDependencies": {
     "@nestjs/common": ">=8.0.0",
-    "@nestjs/event-emitter": ">=8.0.0"
+    "@nestjs/event-emitter": ">=1.3.0"
   }
 }
