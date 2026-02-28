@@ -1,13 +1,18 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 export const FLUSH_EVENT = 'flush';
 
 @Injectable()
-export class FlushService implements OnModuleDestroy {
+export class FlushService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(FlushService.name);
 
   constructor(private readonly eventEmitter: EventEmitter2) {}
+
+  onModuleInit() {
+    process.once('SIGTERM', () => this.flushAll());
+    process.once('SIGINT', () => this.flushAll());
+  }
 
   async onModuleDestroy() {
     await this.flushAll();

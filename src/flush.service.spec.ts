@@ -33,6 +33,22 @@ describe('FlushService', () => {
     });
   });
 
+  describe('onModuleInit', () => {
+    it('should register SIGTERM and SIGINT handlers', () => {
+      // Arrange
+      const onceSpy = jest.spyOn(process, 'once').mockReturnValue(process);
+
+      // Act
+      flushService.onModuleInit();
+
+      // Assert
+      expect(onceSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
+      expect(onceSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function));
+
+      onceSpy.mockRestore();
+    });
+  });
+
   describe('onModuleDestroy', () => {
     it('should call flushAll method', async () => {
       // Arrange

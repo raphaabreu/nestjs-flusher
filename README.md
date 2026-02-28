@@ -12,18 +12,47 @@ npm i @raphaabreu/nestjs-flusher
 
 ## Usage
 
+### Basic usage (flush on shutdown)
+
 Import the module `FlushModule` and add to the imports array in your module:
 
 ```typescript
 import { FlushModule } from '@raphaabreu/nestjs-flusher';
 
 @Module({
-  import: [FlushModule],
+  imports: [FlushModule],
 })
 export class YourModule {}
 ```
 
-Configure a service to be flushable:
+This will automatically flush all registered handlers when the module is destroyed and when SIGTERM/SIGINT signals are received.
+
+### Per-request flushing (recommended for Lambda/serverless)
+
+In AWS Lambda and other serverless environments, the runtime can freeze immediately after a response is sent. Buffered operations (CloudWatch metric writes, log batches, etc.) may be lost if not flushed before the response completes. Use `FlushModule.withFlushOnRequest()` to automatically flush after every HTTP request:
+
+```typescript
+import { FlushModule } from '@raphaabreu/nestjs-flusher';
+
+@Module({
+  imports: [FlushModule.withFlushOnRequest()],
+})
+export class AppModule {}
+```
+
+This registers a global NestJS interceptor that calls `flushAll()` after each request handler completes, ensuring all buffered data is written before the response is sent back.
+
+### Comparison
+
+| Feature | `FlushModule` | `FlushModule.withFlushOnRequest()` |
+|---|---|---|
+| Flush on module destroy | Yes | Yes |
+| Flush on SIGTERM/SIGINT | Yes | Yes |
+| Flush after each HTTP request | No | Yes |
+
+### Configuring flushable services
+
+Configure a service to be flushable by listening to the `FLUSH_EVENT`:
 
 ```typescript
 import { FLUSH_EVENT } from '@raphaabreu/nestjs-flusher';
@@ -37,9 +66,7 @@ export class SampleService {
 }
 ```
 
-When the application gracefully shutdown, the `FLUSH_EVENT` will be raised, however you can at any time invoke a manual flush as below.
-
-Inject `FlushService` into a class where you want to use it:
+When the application gracefully shuts down or receives SIGTERM/SIGINT, the `FLUSH_EVENT` will be raised automatically. You can also invoke a manual flush at any time:
 
 ```typescript
 import { FlushService } from '@raphaabreu/nestjs-flusher';
@@ -52,14 +79,20 @@ export class SampleManualFlush {
     // Your logic...
 
     // Manual flush
-    await flushService.flushAll();
+    await this.flushService.flushAll();
   }
 }
 ```
 
+### Signal handling
+
+`FlushService` automatically registers `SIGTERM` and `SIGINT` handlers via `process.once()` during module initialization. This ensures flushing happens on process termination regardless of whether the consuming app calls `app.enableShutdownHooks()`. Double-flushing is harmless — a second flush finds nothing buffered and returns immediately.
+
+Note: `app.enableShutdownHooks()` is still recommended for running the full NestJS shutdown lifecycle (all `OnModuleDestroy` handlers), but is no longer strictly required just for flushing.
+
 ## Tests
 
-To run the provided unit tests just execute `npm run tests`.
+To run the provided unit tests just execute `npm run test`.
 
 ## License
 
